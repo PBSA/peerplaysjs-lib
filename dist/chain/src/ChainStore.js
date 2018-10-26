@@ -984,6 +984,32 @@ var ChainStore = function () {
 
   /**
    *
+   * @returns a promise with a list of all witness ids. Regardless of if they have been voted in or not.
+   * @memberof ChainStore
+   */
+
+
+  ChainStore.prototype.fetchWitnessAccounts = function fetchWitnessAccounts() {
+    var _this24 = this;
+    return new Promise(function (resolve, reject) {
+      _peerplaysjsWs.Apis.instance().db_api().exec("lookup_witness_accounts", [0, 1000]).then(function (w) {
+        if (w) {
+          var witnessArr = [];
+          for (var i = 0, length = w.length; i < length; i++) {
+            witnessArr.push(w[i][1]); // ids only
+          }
+          _this24.witnesses = _this24.witnesses.merge(witnessArr);
+          _this24._updateObject(witnessArr, true);
+          resolve(_this24.witnesses);
+        } else {
+          resolve(null);
+        }
+      });
+    });
+  };
+
+  /**
+   *
    * @return a promise with the witness object
    */
 
@@ -2055,7 +2081,7 @@ var ChainStore = function () {
   };
 
   ChainStore.prototype.__bindBlock = function __bindBlock(lastBlock, scanToBlock, isInit) {
-    var _this24 = this;
+    var _this25 = this;
 
     var db_api = _peerplaysjsWs.Apis.instance().db_api();
     return new Promise(function (success) {
@@ -2067,24 +2093,24 @@ var ChainStore = function () {
         }
 
         block.timestamp = new Date(block.timestamp);
-        _this24.getWitnessAccount(block.witness).then(function (witness) {
+        _this25.getWitnessAccount(block.witness).then(function (witness) {
           block.witness_account_name = witness.name;
 
-          if (!_this24.recent_blocks_by_id.get(lastBlock)) {
-            _this24.recent_blocks_by_id = _this24.recent_blocks_by_id.set(lastBlock, block);
+          if (!_this25.recent_blocks_by_id.get(lastBlock)) {
+            _this25.recent_blocks_by_id = _this25.recent_blocks_by_id.set(lastBlock, block);
 
-            if (_this24.last_processed_block < lastBlock) {
-              _this24.last_processed_block = lastBlock;
+            if (_this25.last_processed_block < lastBlock) {
+              _this25.last_processed_block = lastBlock;
             }
 
             if (!isInit) {
-              _this24.recent_blocks = _this24.recent_blocks.unshift(block);
+              _this25.recent_blocks = _this25.recent_blocks.unshift(block);
 
-              if (_this24.recent_blocks.size > block_stack_size) {
-                _this24.recent_blocks = _this24.recent_blocks.pop();
+              if (_this25.recent_blocks.size > block_stack_size) {
+                _this25.recent_blocks = _this25.recent_blocks.pop();
               }
-            } else if (_this24.recent_blocks.size < block_stack_size) {
-              _this24.recent_blocks = _this24.recent_blocks.push(block);
+            } else if (_this25.recent_blocks.size < block_stack_size) {
+              _this25.recent_blocks = _this25.recent_blocks.push(block);
             }
 
             block.transactions.forEach(function (tx) {
@@ -2093,19 +2119,19 @@ var ChainStore = function () {
                 op[1].created_at = block.timestamp;
 
                 if (!isInit) {
-                  _this24.recent_operations = _this24.recent_operations.unshift(op);
+                  _this25.recent_operations = _this25.recent_operations.unshift(op);
                 } else {
-                  if (_this24.recent_operations.size < operations_stack_size) {
-                    _this24.recent_operations = _this24.recent_operations.push(op);
+                  if (_this25.recent_operations.size < operations_stack_size) {
+                    _this25.recent_operations = _this25.recent_operations.push(op);
                   }
 
-                  if (_this24.recent_operations.size >= operations_stack_size && _this24.recent_blocks.size >= block_stack_size) {
+                  if (_this25.recent_operations.size >= operations_stack_size && _this25.recent_blocks.size >= block_stack_size) {
                     scanToBlock = lastBlock;
                   }
                 }
 
-                if (_this24.recent_operations.size > operations_stack_size) {
-                  _this24.recent_operations = _this24.recent_operations.pop();
+                if (_this25.recent_operations.size > operations_stack_size) {
+                  _this25.recent_operations = _this25.recent_operations.pop();
                 }
               });
             });
@@ -2117,7 +2143,7 @@ var ChainStore = function () {
             return success();
           }
 
-          _this24.__bindBlock(lastBlock, scanToBlock, isInit).then(function () {
+          _this25.__bindBlock(lastBlock, scanToBlock, isInit).then(function () {
             return success();
           });
         });
@@ -2126,7 +2152,7 @@ var ChainStore = function () {
   };
 
   ChainStore.prototype.fetchRecentOperations = function fetchRecentOperations() {
-    var _this25 = this;
+    var _this26 = this;
 
     var lastBlock = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
 
@@ -2140,9 +2166,9 @@ var ChainStore = function () {
       var last = _ref.lastBlock,
           scanToBlock = _ref.scanToBlock;
 
-      _this25.__bindBlock(last, scanToBlock, isInit).then(function () {
+      _this26.__bindBlock(last, scanToBlock, isInit).then(function () {
         if (isInit) {
-          _this25.store_initialized = true;
+          _this26.store_initialized = true;
         }
       });
     });
