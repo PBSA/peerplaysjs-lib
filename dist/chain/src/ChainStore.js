@@ -121,6 +121,7 @@ var ChainStore = function () {
     this.betting_markets_list_by_sport_id = _immutable2.default.Map();
     this.account_history_requests = new Map(); // /< tracks pending history requests
     this.witness_by_account_id = new Map();
+    this.witnesses = _immutable2.default.Set();
     this.account_by_witness_id = new Map();
     this.committee_by_account_id = new Map();
     this.objects_by_vote_id = new Map();
